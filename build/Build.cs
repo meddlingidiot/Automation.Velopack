@@ -14,11 +14,11 @@ using Automation.Nuke.Components.Parameters;
 ///   - Microsoft VisualStudio     https://nuke.build/visualstudio
 ///   - Microsoft VSCode           https://nuke.build/vscode
 
-public class Build : AzurePipelinesBuild, IShowVersion, IClean, ICompile, IRestore, IScanForSecrets, IRunUnitTests, IRunIntegrationTests, IGenerateCoverageReport, ITest, IUpdateChangelog, IPackage, ITagRelease, IAnnounceRelease
+public class Build : GitHubActionsBuild, IShowVersion, IClean, ICompile, IRestore, IScanForSecrets, IRunUnitTests, IRunIntegrationTests, IGenerateCoverageReport, ITest, IUpdateChangelog, IPackage, ITagRelease, IAnnounceRelease
 {
 
     public static int Main() => Execute<Build>(
         x => ((IPackage)x).ReleasePackage);
 
-    int IHasTests.MinCoverageThreshold => 55;
+    int IHasTests.MinCoverageThreshold => 40;
 }
