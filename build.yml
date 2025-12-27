@@ -73,9 +73,8 @@ jobs:
       # ----------------------------------------------------------------
       - name: Authenticate to GitHub Packages
         run: |
-          dotnet nuget add source --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" || echo "Package source already exists or failed to add, continuing..."
+          dotnet nuget add source --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
         shell: pwsh
-        continue-on-error: true
 
       # ----------------------------------------------------------------
       # Build: Run Nuke Build (uses default target from Build.cs)
@@ -144,7 +143,6 @@ jobs:
       - name: Publish Test Results
         uses: dorny/test-reporter@v1
         if: always()
-        continue-on-error: true
         with:
           name: 'Unit + Integration Tests'
           path: ${{ github.workspace }}/artifacts/test-results/**/*.trx

@@ -21,4 +21,5 @@ public class Build : GitHubActionsBuild, IShowVersion, IClean, ICompile, IRestor
         x => ((IPackage)x).ReleasePackage);
 
     int IHasTests.MinCoverageThreshold => 40;
+    string IHasGitHubPackages.GitHubOwner => "meddlingidiot";
 }
