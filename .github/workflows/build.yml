@@ -92,7 +92,7 @@ jobs:
         shell: pwsh
         env:
           AZUREBLOBSASTOKEN: ${{ secrets.AZURE_BLOB_SAS_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
 
       # ----------------------------------------------------------------
       # Publish: Velopack Installers
