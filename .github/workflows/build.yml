@@ -73,7 +73,7 @@ jobs:
       # ----------------------------------------------------------------
       - name: Authenticate to GitHub Packages
         run: |
-          dotnet nuget add source --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" || echo "Package source already exists or failed to add, continuing..."
+          dotnet nuget add source --username ${{ github.actor }} --password ${{ secrets.GH_PACKAGES_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" || echo "Package source already exists or failed to add, continuing..."
         shell: pwsh
         continue-on-error: true
 
