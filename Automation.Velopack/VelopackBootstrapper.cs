@@ -86,7 +86,7 @@ public static class VelopackBootstrapper
 
                 // install new version and restart app
                 logStep = "Apply Updates and Restart...";
-                mgr.ApplyUpdatesAndRestart(newVersion);
+                mgr.ApplyUpdatesAndRestart(newVersion, args);
             }
         }
         catch (Exception ex)
