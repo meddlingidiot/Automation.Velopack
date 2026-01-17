@@ -6,6 +6,8 @@ public class VelopackBootstrapperTests : IDisposable
     private readonly string _globalFolder;
     private readonly string _appChannelFile;
     private readonly string _appFolder;
+    private readonly string _globalPinFile;
+    private readonly string _appPinFile;
     private readonly string? _originalEnvVar;
     private const string TestAppName = "TestApp";
 
@@ -17,10 +19,12 @@ public class VelopackBootstrapperTests : IDisposable
         // Setup global channel file path
         _globalFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), VelopackBootstrapper.SharedDeptFolder);
         _globalChannelFile = Path.Combine(_globalFolder, ".channel");
+        _globalPinFile = Path.Combine(_globalFolder, ".pinned");
 
         // Setup app-specific channel file path
         _appFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), TestAppName);
         _appChannelFile = Path.Combine(_appFolder, ".channel");
+        _appPinFile = Path.Combine(_appFolder, ".pinned");
 
         // Clean up any existing test files
         if (File.Exists(_globalChannelFile))
@@ -30,6 +34,14 @@ public class VelopackBootstrapperTests : IDisposable
         if (File.Exists(_appChannelFile))
         {
             File.Delete(_appChannelFile);
+        }
+        if (File.Exists(_globalPinFile))
+        {
+            File.Delete(_globalPinFile);
+        }
+        if (File.Exists(_appPinFile))
+        {
+            File.Delete(_appPinFile);
         }
 
         // Clear environment variable for clean tests
@@ -49,6 +61,14 @@ public class VelopackBootstrapperTests : IDisposable
         if (File.Exists(_appChannelFile))
         {
             File.Delete(_appChannelFile);
+        }
+        if (File.Exists(_globalPinFile))
+        {
+            File.Delete(_globalPinFile);
+        }
+        if (File.Exists(_appPinFile))
+        {
+            File.Delete(_appPinFile);
         }
     }
 
@@ -445,4 +465,265 @@ public class VelopackBootstrapperTests : IDisposable
         // Assert - if we get here without exception, the test passed
         Assert.True(true);
     }
+
+    #region Pin File Tests
+
+    [Fact]
+    public void CreatePinFile_CreatesGlobalPinFile()
+    {
+        // Act
+        var result = VelopackBootstrapper.CreatePinFile(ChannelScope.Global, TestAppName);
+
+        // Assert
+        Assert.True(result);
+        Assert.True(File.Exists(_globalPinFile));
+        var content = File.ReadAllText(_globalPinFile);
+        Assert.Equal("true", content);
+    }
+
+    [Fact]
+    public void CreatePinFile_CreatesApplicationPinFile()
+    {
+        // Act
+        var result = VelopackBootstrapper.CreatePinFile(ChannelScope.Application, TestAppName);
+
+        // Assert
+        Assert.True(result);
+        Assert.True(File.Exists(_appPinFile));
+        var content = File.ReadAllText(_appPinFile);
+        Assert.Equal("true", content);
+    }
+
+    [Fact]
+    public void CreatePinFile_DeletesFileWhenPinnedIsFalse()
+    {
+        // Arrange
+        VelopackBootstrapper.CreatePinFile(ChannelScope.Application, TestAppName, true);
+        Assert.True(File.Exists(_appPinFile));
+
+        // Act
+        var result = VelopackBootstrapper.CreatePinFile(ChannelScope.Application, TestAppName, false);
+
+        // Assert
+        Assert.True(result);
+        Assert.False(File.Exists(_appPinFile));
+    }
+
+    [Fact]
+    public void CreatePinFile_CreatesDirectoryIfNotExists()
+    {
+        // Arrange
+        if (Directory.Exists(_appFolder))
+        {
+            Directory.Delete(_appFolder, true);
+        }
+
+        // Act
+        var result = VelopackBootstrapper.CreatePinFile(ChannelScope.Application, TestAppName);
+
+        // Assert
+        Assert.True(result);
+        Assert.True(Directory.Exists(_appFolder));
+        Assert.True(File.Exists(_appPinFile));
+    }
+
+    [Fact]
+    public void ReadPinFile_ReturnsNullWhenFileDoesNotExist()
+    {
+        // Act
+        var result = VelopackBootstrapper.ReadPinFile(ChannelScope.Application, TestAppName);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void ReadPinFile_ReturnsTrueWhenFileContainsTrue()
+    {
+        // Arrange
+        VelopackBootstrapper.CreatePinFile(ChannelScope.Application, TestAppName, true);
+
+        // Act
+        var result = VelopackBootstrapper.ReadPinFile(ChannelScope.Application, TestAppName);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void ReadPinFile_ReturnsTrueWhenFileContains1()
+    {
+        // Arrange
+        Directory.CreateDirectory(_appFolder);
+        File.WriteAllText(_appPinFile, "1");
+
+        // Act
+        var result = VelopackBootstrapper.ReadPinFile(ChannelScope.Application, TestAppName);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void ReadPinFile_IsCaseInsensitive()
+    {
+        // Arrange
+        Directory.CreateDirectory(_appFolder);
+        File.WriteAllText(_appPinFile, "TRUE");
+
+        // Act
+        var result = VelopackBootstrapper.ReadPinFile(ChannelScope.Application, TestAppName);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void ReadPinFile_TrimsWhitespace()
+    {
+        // Arrange
+        Directory.CreateDirectory(_appFolder);
+        File.WriteAllText(_appPinFile, "  true  \n");
+
+        // Act
+        var result = VelopackBootstrapper.ReadPinFile(ChannelScope.Application, TestAppName);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void ReadPinFile_ReadsFromGlobalScope()
+    {
+        // Arrange
+        VelopackBootstrapper.CreatePinFile(ChannelScope.Global, TestAppName, true);
+
+        // Act
+        var result = VelopackBootstrapper.ReadPinFile(ChannelScope.Global, TestAppName);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void IsVersionPinned_ReturnsFalseWhenNoPinFilesExist()
+    {
+        // Act
+        var result = VelopackBootstrapper.IsVersionPinned(TestAppName);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void IsVersionPinned_ReturnsTrueWhenApplicationPinFileExists()
+    {
+        // Arrange
+        VelopackBootstrapper.CreatePinFile(ChannelScope.Application, TestAppName, true);
+
+        // Act
+        var result = VelopackBootstrapper.IsVersionPinned(TestAppName);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void IsVersionPinned_ReturnsTrueWhenGlobalPinFileExists()
+    {
+        // Arrange
+        VelopackBootstrapper.CreatePinFile(ChannelScope.Global, TestAppName, true);
+
+        // Act
+        var result = VelopackBootstrapper.IsVersionPinned(TestAppName);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void IsVersionPinned_PrioritizesApplicationPinFileOverGlobal()
+    {
+        // Arrange
+        Directory.CreateDirectory(_globalFolder);
+        File.WriteAllText(_globalPinFile, "false");
+        Directory.CreateDirectory(_appFolder);
+        File.WriteAllText(_appPinFile, "true");
+
+        // Act
+        var result = VelopackBootstrapper.IsVersionPinned(TestAppName);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void IsVersionPinned_AcceptsNumericOne()
+    {
+        // Arrange
+        Directory.CreateDirectory(_appFolder);
+        File.WriteAllText(_appPinFile, "1");
+
+        // Act
+        var result = VelopackBootstrapper.IsVersionPinned(TestAppName);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void IsVersionPinned_IsCaseInsensitive()
+    {
+        // Arrange
+        Directory.CreateDirectory(_appFolder);
+        File.WriteAllText(_appPinFile, "True");
+
+        // Act
+        var result = VelopackBootstrapper.IsVersionPinned(TestAppName);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void IsVersionPinned_ReturnsFalseForInvalidContent()
+    {
+        // Arrange
+        Directory.CreateDirectory(_appFolder);
+        File.WriteAllText(_appPinFile, "not-a-boolean");
+
+        // Act
+        var result = VelopackBootstrapper.IsVersionPinned(TestAppName);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void Startup_SkipsUpdateCheck_WhenVersionIsPinned()
+    {
+        // Arrange
+        VelopackBootstrapper.CreatePinFile(ChannelScope.Application, TestAppName, true);
+
+        // Act - should return immediately without throwing
+        VelopackBootstrapper.Startup(TestAppName);
+
+        // Assert - if we get here without exception, the test passed
+        Assert.True(true);
+    }
+
+    [Fact]
+    public void Startup_SkipsUpdateCheck_WhenGlobalVersionIsPinned()
+    {
+        // Arrange
+        VelopackBootstrapper.CreatePinFile(ChannelScope.Global, TestAppName, true);
+
+        // Act - should return immediately without throwing
+        VelopackBootstrapper.Startup(TestAppName);
+
+        // Assert - if we get here without exception, the test passed
+        Assert.True(true);
+    }
+
+    #endregion
 }

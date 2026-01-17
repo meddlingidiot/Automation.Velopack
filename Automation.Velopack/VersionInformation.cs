@@ -5,7 +5,8 @@ namespace Automation.Velopack;
 public static class VersionInformation
 {
     public static string FullVersion =>
-        Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "Unknown";
+        Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion ?? "Unknown";
 
     public static string Version
     {

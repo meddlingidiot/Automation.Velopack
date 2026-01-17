@@ -62,6 +62,12 @@ public static class VelopackBootstrapper
                 return;
             }
 
+            // Check if version is pinned
+            if (IsVersionPinned(applicationName))
+            {
+                return;
+            }
+
             var channel = ResolveChannel(applicationName); // "Stable" or "Prerelease"
 
             logStep = "Create Instance UpdateManager()";
@@ -86,7 +92,8 @@ public static class VelopackBootstrapper
 
                 // install new version and restart app
                 logStep = "Apply Updates and Restart...";
-                mgr.ApplyUpdatesAndRestart(newVersion, args);
+                var restartArgs = args.Where(a => !a.Equals("--skip-update", StringComparison.OrdinalIgnoreCase)).ToArray();
+                mgr.ApplyUpdatesAndRestart(newVersion, restartArgs);
             }
         }
         catch (Exception ex)
@@ -139,6 +146,68 @@ public static class VelopackBootstrapper
         {
             var ch = File.ReadAllText(channelFile).Trim();
             if (!string.IsNullOrEmpty(ch)) return ch;
+        }
+
+        return null;
+    }
+
+    public static bool IsVersionPinned(string appName)
+    {
+        // Check application-level pin file first
+        var applicationPinFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            appName, ".pinned");
+        if (File.Exists(applicationPinFile))
+        {
+            var content = File.ReadAllText(applicationPinFile).Trim();
+            return content.Equals("true", StringComparison.OrdinalIgnoreCase) || content == "1";
+        }
+
+        // Check global pin file
+        var globalPinFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            SharedDeptFolder, ".pinned");
+        if (File.Exists(globalPinFile))
+        {
+            var content = File.ReadAllText(globalPinFile).Trim();
+            return content.Equals("true", StringComparison.OrdinalIgnoreCase) || content == "1";
+        }
+
+        return false;
+    }
+
+    public static bool CreatePinFile(ChannelScope scope, string appName, bool pinned = true)
+    {
+        var pathScope = scope == ChannelScope.Global ? SharedDeptFolder : appName;
+        var pinFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            pathScope, ".pinned");
+        var containingFolder = Path.GetDirectoryName(pinFile);
+        if (containingFolder == null)
+            return false;
+
+        if (!Directory.Exists(containingFolder))
+            Directory.CreateDirectory(containingFolder);
+
+        if (pinned)
+        {
+            File.WriteAllText(pinFile, "true");
+        }
+        else if (File.Exists(pinFile))
+        {
+            File.Delete(pinFile);
+        }
+
+        return true;
+    }
+
+    public static bool? ReadPinFile(ChannelScope scope, string appName)
+    {
+        var pathScope = scope == ChannelScope.Global ? SharedDeptFolder : appName;
+        var pinFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            pathScope, ".pinned");
+
+        if (File.Exists(pinFile))
+        {
+            var content = File.ReadAllText(pinFile).Trim();
+            return content.Equals("true", StringComparison.OrdinalIgnoreCase) || content == "1";
         }
 
         return null;
