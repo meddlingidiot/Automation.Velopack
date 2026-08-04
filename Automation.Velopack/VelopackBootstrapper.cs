@@ -14,6 +14,7 @@ public static class VelopackBootstrapper
     {
         // 1) Env var override (CI/testing friendly)
         var env = Environment.GetEnvironmentVariable("VELOPACK_CHANNEL");
+        Log(appName,$"ENV VELOPACK_CHANNEL: {env}");
         if (!string.IsNullOrWhiteSpace(env)) return env;
 
         // 2) Command line (allow a shortcut like: MyApp.exe --channel=Prerelease)
@@ -22,6 +23,7 @@ public static class VelopackBootstrapper
         {
             if (arg.StartsWith("--channel=", StringComparison.OrdinalIgnoreCase))
             {
+                Log(appName,$"Command line arg channel: {arg}");
                 return arg.Split('=')[1];
             }
         }
@@ -32,6 +34,7 @@ public static class VelopackBootstrapper
         if (File.Exists(globalChannelFile))
         {
             var ch = File.ReadAllText(globalChannelFile).Trim();
+            Log(appName,$"Global channel file: {globalChannelFile}, content: {ch}");
             if (!string.IsNullOrEmpty(ch)) return ch;
         }
 
@@ -41,6 +44,7 @@ public static class VelopackBootstrapper
         if (File.Exists(applicationChannelFile))
         {
             var ch = File.ReadAllText(applicationChannelFile).Trim();
+            Log(appName,$"Application channel file: {applicationChannelFile}, content: {ch}");
             if (!string.IsNullOrEmpty(ch)) return ch;
         }
 
@@ -48,7 +52,10 @@ public static class VelopackBootstrapper
         return "Stable";
     }
 
-    public static void Startup(string applicationName, string[]? args = null)
+    public static void Startup(
+        string applicationName, 
+        string[]? args = null,
+        Action<int>? progress = null)
     {
         string logStep = "Application.Startup() begin";
         // This does not work from here. must be called directly from startup.
@@ -78,45 +85,72 @@ public static class VelopackBootstrapper
             {
                 ExplicitChannel = $"{applicationName}-{channel}-win"
             };
+            Log(applicationName,$"Source URL: {sourceUrl} Channel: {checkOptions.ExplicitChannel}");
             var mgr = new UpdateManager(source, checkOptions);
 
             // check for new version
             logStep = "Check for new version";
             var newVersion = mgr.CheckForUpdatesAsync().ConfigureAwait(false).GetAwaiter().GetResult();
             logStep = $"newVersion = {newVersion}";
+            
+            Log(applicationName,logStep);
+            
             if (newVersion != null)
             {
                 // download new version
                 logStep = "Download Updates...";
-                mgr.DownloadUpdatesAsync(newVersion).ConfigureAwait(false).GetAwaiter().GetResult();
+                Log(applicationName,logStep);
+
+                // Invoked to expose start of download (with -1) and end of download (with 101)
+                progress?.Invoke(-1);
+                mgr.DownloadUpdatesAsync(
+                    newVersion,
+                    progress)
+                    .ConfigureAwait(false).GetAwaiter().GetResult();
+                progress?.Invoke(101);
 
                 // install new version and restart app
                 logStep = "Apply Updates and Restart...";
+                Log(applicationName,logStep);
                 var restartArgs = args.Where(a => !a.Equals("--skip-update", StringComparison.OrdinalIgnoreCase)).ToArray();
                 mgr.ApplyUpdatesAndRestart(newVersion, restartArgs);
             }
         }
         catch (Exception ex)
         {
-            try
-            {
-                if (!Directory.Exists("C:\\Temp"))
-                {
-                    Directory.CreateDirectory("C:\\Temp");
-                }
-
-                File.AppendAllText($"C:\\Temp\\{applicationName}-Log.txt",
-                    $"Step: {logStep} Exception: {ex.Message} {Environment.NewLine} StackTrace: {ex.StackTrace}");
-            }
-            catch
-            {
-                // Intentionally left blank
-            }
-
-            Console.WriteLine(ex.Message);
+            Log(applicationName,$"Step: {logStep} Exception: {ex.Message} {Environment.NewLine} StackTrace: {ex.StackTrace}");
         }
     }
 
+    private static void Log(string applicationName, string message)
+    {
+        try
+        {
+            if (!Directory.Exists("C:\\Temp"))
+            {
+                Directory.CreateDirectory("C:\\Temp");
+            }
+
+            File.AppendAllText($"C:\\Temp\\{applicationName}-Log.txt", $"{message}\r\n");
+        }
+        catch
+        {
+            // Intentionally left blank.
+        }
+
+        Console.WriteLine(message);
+    }
+
+    public static void DeleteChannelFile(ChannelScope scope, string? appName = null)
+    {
+        appName ??= string.Empty;
+        var pathScope = scope == ChannelScope.Global ? SharedDeptFolder : appName;
+        var channelFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            pathScope, ".channel");
+        if (File.Exists(channelFile)) File.Delete(channelFile);
+    }
+
+ 
     public static bool CreateChannelFile(ChannelScope scope, string appName, string channel = "Prerelease")
     {
         if (channel != "Stable" && channel != "Prerelease")
