@@ -2,10 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] - 1.0.4-beta.3
+## [Unreleased] - 1.0.4-beta.4
 
 ### 📝 Other Changes
 
+- Upgraded Nuke to Fallout for the build system... ([e51e86a](../../commit/e51e86a))
 - Port ProMiles changes to VelopackBootstrapper and version logic ([262187a](../../commit/262187a))
 - Bump Velopack package to version 1.2.0 ([e95f706](../../commit/e95f706))
 - update dependencies in build and test projects ([a48c7f2](../../commit/a48c7f2))
