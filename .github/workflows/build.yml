@@ -127,7 +127,7 @@ jobs:
             echo "Coverage file not found"
           }
       
-      #      - name: Create Coverage Badge
+      #      - name: Create Coverage Badge (is this dead)
       #        if: always() && github.ref == 'refs/heads/main'
       #        uses: schneegans/dynamic-badges-action@v1.7.0
       #        with:
