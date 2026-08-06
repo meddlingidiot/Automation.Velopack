@@ -726,4 +726,81 @@ public class VelopackBootstrapperTests : IDisposable
     }
 
     #endregion
+
+    #region DeleteChannelFile Tests
+
+    [Fact]
+    public void DeleteChannelFile_DeletesGlobalChannelFile_WithoutAppName()
+    {
+        // Arrange
+        VelopackBootstrapper.CreateChannelFile(ChannelScope.Global, TestAppName, "Prerelease");
+        Assert.True(File.Exists(_globalChannelFile));
+
+        // Act
+        VelopackBootstrapper.DeleteChannelFile(ChannelScope.Global);
+
+        // Assert
+        Assert.False(File.Exists(_globalChannelFile));
+    }
+
+    [Fact]
+    public void DeleteChannelFile_DeletesGlobalChannelFile_WithNullAppName()
+    {
+        // Arrange
+        VelopackBootstrapper.CreateChannelFile(ChannelScope.Global, TestAppName, "Prerelease");
+        Assert.True(File.Exists(_globalChannelFile));
+
+        // Act
+        VelopackBootstrapper.DeleteChannelFile(ChannelScope.Global, null);
+
+        // Assert
+        Assert.False(File.Exists(_globalChannelFile));
+    }
+
+    [Fact]
+    public void DeleteChannelFile_DeletesApplicationChannelFile_WithAppName()
+    {
+        // Arrange
+        VelopackBootstrapper.CreateChannelFile(ChannelScope.Application, TestAppName, "Stable");
+        Assert.True(File.Exists(_appChannelFile));
+
+        // Act
+        VelopackBootstrapper.DeleteChannelFile(ChannelScope.Application, TestAppName);
+
+        // Assert
+        Assert.False(File.Exists(_appChannelFile));
+    }
+
+    [Fact]
+    public void DeleteChannelFile_DoesNotThrow_WhenFileDoesNotExist()
+    {
+        // Arrange - ensure file doesn't exist
+        if (File.Exists(_globalChannelFile))
+        {
+            File.Delete(_globalChannelFile);
+        }
+
+        // Act & Assert - should not throw
+        VelopackBootstrapper.DeleteChannelFile(ChannelScope.Global);
+        Assert.False(File.Exists(_globalChannelFile));
+    }
+
+    [Fact]
+    public void DeleteChannelFile_OnlyDeletesTargetedScope()
+    {
+        // Arrange
+        VelopackBootstrapper.CreateChannelFile(ChannelScope.Global, TestAppName, "Prerelease");
+        VelopackBootstrapper.CreateChannelFile(ChannelScope.Application, TestAppName, "Stable");
+        Assert.True(File.Exists(_globalChannelFile));
+        Assert.True(File.Exists(_appChannelFile));
+
+        // Act - delete only global
+        VelopackBootstrapper.DeleteChannelFile(ChannelScope.Global);
+
+        // Assert
+        Assert.False(File.Exists(_globalChannelFile));
+        Assert.True(File.Exists(_appChannelFile));
+    }
+
+    #endregion
 }
