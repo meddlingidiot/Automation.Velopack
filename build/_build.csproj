@@ -11,7 +11,7 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Automation.Fallout.Components" Version="1.0.4" />
+    <PackageReference Include="Automation.Fallout.Components" Version="1.0.10" />
     <PackageReference Include="Fallout.Common" Version="11.0.18" />
   </ItemGroup>
   <ItemGroup>
