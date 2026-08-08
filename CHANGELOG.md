@@ -2,10 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] - 1.0.4-beta.4
+## [Unreleased] - 1.0.4-beta.9
 
 ### 📝 Other Changes
 
+- build ([a4a93bd](../../commit/a4a93bd))
+- trigger a bulid ([defd3e6](../../commit/defd3e6))
+- Trigger a build ([c92c57a](../../commit/c92c57a))
+- Trigger velopack on my machine ([abd5363](../../commit/abd5363))
+- Upgraded with live Fallout build ([c54b891](../../commit/c54b891))
 - Upgraded Nuke to Fallout for the build system... ([e51e86a](../../commit/e51e86a))
 - Port ProMiles changes to VelopackBootstrapper and version logic ([262187a](../../commit/262187a))
 - Bump Velopack package to version 1.2.0 ([e95f706](../../commit/e95f706))
