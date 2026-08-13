@@ -2,10 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] - 1.0.4-beta.9
+## [Unreleased] - 1.0.4-beta.10
 
 ### 📝 Other Changes
 
+- upgrade to Fallout and using windows-latest ([4ba5208](../../commit/4ba5208))
 - build ([a4a93bd](../../commit/a4a93bd))
 - trigger a bulid ([defd3e6](../../commit/defd3e6))
 - Trigger a build ([c92c57a](../../commit/c92c57a))
