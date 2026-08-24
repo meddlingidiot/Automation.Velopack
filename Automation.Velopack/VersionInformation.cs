@@ -14,7 +14,7 @@ public static class VersionInformation
             // Might fix version bug where Velopack version is shown.
             fullVersion ??= Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "Unknown";
             
-            // Left as extra fallback, but this might be what causes the Velopack version to be shown in some cases.
+            // Left as extra fallback, but this might be what causes the Velopack version to be shown in some cases
             fullVersion ??= Assembly.GetCallingAssembly().GetName().Version?.ToString() ?? "Unknown";
 
             return fullVersion;
