@@ -11,7 +11,7 @@ using Automation.Fallout.Components.Parameters;
 /// Support plugins are available for:
 ///   - JetBrains ReSharper        https://nuke.build/resharper
 ///   - JetBrains Rider            https://nuke.build/rider
-///   - Microsoft VisualStudio     https://nuke.build/visualstudio
+///   - Microsoft VisualStudio     https://nuke.build/visualstudiowoh
 ///   - Microsoft VSCode           https://nuke.build/vscode
 
 public class Build : GitHubActionsBuild, IShowVersion, IClean, ICompile, IRestore, IScanForSecrets, IRunUnitTests, IRunIntegrationTests, IGenerateCoverageReport, ITest, IUpdateChangelog, IPackageGitHub, ITagRelease, IAnnounceRelease
@@ -22,4 +22,4 @@ public class Build : GitHubActionsBuild, IShowVersion, IClean, ICompile, IRestor
 
     int IHasTests.MinCoverageThreshold => 40;
     string IHasGitHubPackages.GitHubOwner => "meddlingidiot";
-//}
+}
