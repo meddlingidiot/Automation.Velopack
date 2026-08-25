@@ -22,4 +22,4 @@ public class Build : GitHubActionsBuild, IShowVersion, IClean, ICompile, IRestor
 
     int IHasTests.MinCoverageThreshold => 40;
     string IHasGitHubPackages.GitHubOwner => "meddlingidiot";
-}
+//}
