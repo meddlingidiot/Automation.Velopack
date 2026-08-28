@@ -52,10 +52,56 @@ public static class VelopackBootstrapper
         return "Stable";
     }
 
+    /// <summary>
+    /// Where MeddlingIdiot applications publish their releases, and therefore where they must
+    /// look for updates.
+    /// </summary>
+    /// <remarks>
+    /// Replaced AFTR's staftrinstallers, which this package pointed at from the Nuke-era
+    /// default. Every MeddlingIdiot build overrides the *upload* target
+    /// (IHasVelopack.AzureBlobAccount) but nothing overrode the runtime check, so applications
+    /// uploaded to one container and asked another for updates -- answering 404 forever, and
+    /// only visible once an update was actually published.
+    ///
+    /// Read-and-list only. A SAS embedded in a shipped desktop application is readable by
+    /// anyone who has the application, so it must not be able to write or delete: that would
+    /// hand every user the ability to replace the installers everyone else downloads.
+    /// Expires 2029-12-31.
+    /// </remarks>
+    private const string DefaultSourceUrl =
+        "https://meddlingidiotinstallers.blob.core.windows.net/installers/"
+        + "?sp=rl&st=2025-12-28T02:30:01Z&se=2029-12-31T10:45:01Z&spr=https&sv=2024-11-04"
+        + "&sr=c&sig=gnclHWB2peK1jLBP1Mf9yhuiCqgmH6Tv5qusYtgVADc%3D";
+
+    /// <summary>
+    /// Where to look for updates, in order of precedence: the VELOPACK_SOURCE_URL environment
+    /// variable, then whatever the caller passed, then the MeddlingIdiot feed.
+    /// </summary>
+    /// <remarks>
+    /// The environment variable comes first deliberately. An application shipped pointing at
+    /// the wrong container cannot update itself to a build that points at the right one, so
+    /// without an override outside the binary the only fix is a reinstall.
+    /// </remarks>
+    internal static string ResolveSourceUrl(string? explicitUrl)
+    {
+        var fromEnvironment = Environment.GetEnvironmentVariable("VELOPACK_SOURCE_URL");
+        if (!string.IsNullOrWhiteSpace(fromEnvironment))
+        {
+            return fromEnvironment;
+        }
+
+        return string.IsNullOrWhiteSpace(explicitUrl) ? DefaultSourceUrl : explicitUrl!;
+    }
+
+    /// <param name="sourceUrl">
+    /// Overrides the feed for an application that does not publish to the MeddlingIdiot
+    /// container. Rarely needed: the default now matches where the builds actually upload.
+    /// </param>
     public static void Startup(
         string applicationName, 
         string[]? args = null,
-        Action<int>? progress = null)
+        Action<int>? progress = null,
+        string? sourceUrl = null)
     {
         string logStep = "Application.Startup() begin";
         // This does not work from here. must be called directly from startup.
@@ -78,14 +124,13 @@ public static class VelopackBootstrapper
             var channel = ResolveChannel(applicationName); // "Stable" or "Prerelease"
 
             logStep = "Create Instance UpdateManager()";
-            var sourceUrl =
-                "https://staftrinstallers.blob.core.windows.net/installers/?sp=rl&st=2025-11-15T07:03:42Z&se=2125-11-15T15:18:42Z&spr=https&sv=2024-11-04&sr=c&sig=HC1aJk%2B%2FiebSo61QYQ4zMEAyezFGmUqW9ajOSs31MWI%3D";
-            var source = new SimpleWebSource(sourceUrl);
+            var resolvedUrl = ResolveSourceUrl(sourceUrl);
+            var source = new SimpleWebSource(resolvedUrl);
             var checkOptions = new UpdateOptions
             {
                 ExplicitChannel = $"{applicationName}-{channel}-win"
             };
-            Log(applicationName,$"Source URL: {sourceUrl} Channel: {checkOptions.ExplicitChannel}");
+            Log(applicationName,$"Source URL: {resolvedUrl} Channel: {checkOptions.ExplicitChannel}");
             var mgr = new UpdateManager(source, checkOptions);
 
             // check for new version
