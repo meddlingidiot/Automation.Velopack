@@ -28,7 +28,7 @@ public static class VelopackBootstrapper
             }
         }
 
-        // 3) Marker file (user opt-in): %LOCALAPPDATA%\YourApp\.channel (contents: Stable/Prerelease)
+        // 3) Marker file (user opt-in): %LOCALAPPDATA%\YourApp\.channel (contents: Stable/Prerelease).
         var globalChannelFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             SharedDeptFolder, ".channel");
         if (File.Exists(globalChannelFile))
